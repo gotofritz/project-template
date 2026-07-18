@@ -2,31 +2,9 @@ version: "3"
 
 vars:
   SOURCES: ./
-  # Python
   VENV: .venv/bin
-  # Go
-  BIN_DIR: bin
 
 tasks:
-  # ── Generic ──────────────────────────────────────────────────────────────────
-
-  qa:
-    desc: Run linting and tests
-    deps: [static, test]
-
-  static:
-    desc: Run all static analysis
-    deps: [lint, typecheck]
-
-  clean:
-    desc: Remove build artifacts
-    cmds:
-      - rm -rf {{.BIN_DIR}}/ coverage.out tests/coverage/
-
-  # ── Python ───────────────────────────────────────────────────────────────────
-  # For Go projects: delete this section, then rename the go-* tasks below to
-  # drop the prefix (go-lint → lint, go-test → test, etc.)
-
   lint:
     desc: Check code with ruff
     cmds:
@@ -44,6 +22,10 @@ tasks:
     cmds:
       - "{{.VENV}}/ty check src/"
 
+  static:
+    desc: Run all static analysis
+    deps: [lint, typecheck]
+
   test:
     desc: Run pytest with coverage
     cmds:
@@ -54,82 +36,11 @@ tasks:
     cmds:
       - open tests/coverage/index.html
 
-  # ── Go ───────────────────────────────────────────────────────────────────────
-  # go-lint, go-test, go-typecheck, go-coverage-html conflict with Python tasks
-  # above. For Go projects: delete the Python section and rename those four.
+  qa:
+    desc: Run linting and tests
+    deps: [static, test]
 
-  build:
-    desc: Build the binary
+  clean:
+    desc: Remove build artifacts
     cmds:
-      - mkdir -p {{.BIN_DIR}} && go build -o {{.BIN_DIR}}/app .
-
-  fmt:
-    desc: Format Go source files
-    cmds:
-      - gofmt -w .
-
-  vet:
-    desc: Run go vet
-    cmds:
-      - go vet ./...
-
-  tidy:
-    desc: Tidy go.mod and go.sum
-    cmds:
-      - go mod tidy
-
-  go-lint:
-    desc: Run golangci-lint
-    cmds:
-      - golangci-lint run ./...
-
-  go-typecheck:
-    desc: Run go vet (static analysis)
-    cmds:
-      - go vet ./...
-
-  go-test:
-    desc: Run tests
-    cmds:
-      - go test ./... -v -count=1
-
-  test-race:
-    desc: Run tests with race detector
-    cmds:
-      - go test -race ./... -count=1
-
-  coverage:
-    desc: Print total coverage percentage
-    cmds:
-      - go test ./... -coverprofile=coverage.out -count=1
-      - go tool cover -func=coverage.out | tail -1
-      - rm -f coverage.out
-
-  go-coverage-html:
-    desc: Open HTML coverage report
-    cmds:
-      - go test ./... -coverprofile=coverage.out -count=1
-      - go tool cover -html=coverage.out
-
-  check-ci:
-    desc: "CI quality check: lint + build + coverage >= 85%"
-    cmds:
-      - golangci-lint run ./...
-      - go build ./...
-      - go test -coverpkg=./... ./... -coverprofile=coverage.out -count=1
-      - |
-        COVERAGE=$(go tool cover -func=coverage.out | grep "^total:" | awk '{print $3}' | tr -d '%')
-        rm -f coverage.out
-        echo "Total coverage: ${COVERAGE}%"
-        awk -v cov="${COVERAGE}" 'BEGIN { if (cov < 85) { print "FAIL: coverage " cov "% is below 85%"; exit 1 } else { print "PASS: coverage " cov "% >= 85%" } }'
-
-  serve:
-    desc: Serve output/ over HTTP on port 8080
-    dir: output
-    cmds:
-      - python3 -m http.server 8080
-
-  release:
-    desc: Cut a release with goreleaser
-    cmds:
-      - goreleaser release --clean
+      - rm -rf tests/coverage/

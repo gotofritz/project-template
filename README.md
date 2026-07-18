@@ -5,7 +5,8 @@ A project
 ## Prerequisites
 
 - [pre-commit](https://pre-commit.com/#install) — git hook manager
-- [Task](https://taskfile.dev/installation/) — task runner
+- **Python projects**: [Task](https://taskfile.dev/installation/) — task runner (`Taskfile.yml`)
+- **Go projects**: [Make](https://www.gnu.org/software/make/) — task runner (`Makefile`)
 
 After installing, run:
 
